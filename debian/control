@@ -1,0 +1,13 @@
+Source: moxa-it87-power-igtd
+Section: admin
+Priority: required
+Maintainer: Elvis Yao <ElvisCW.Yao@moxa.com>
+Build-Depends: debhelper (>= 10)
+Standards-Version: 4.1.2
+Homepage: https://www.moxa.com/
+
+Package: moxa-it87-power-igtd
+Architecture: any
+Depends: ${misc:Depends}
+Description: Daemon for monitoring it878x power ignition status
+ It contains the daemon for monitoring power ignition GPIO pin status

@@ -1,0 +1,99 @@
+#!/bin/bash -e
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# Authors:
+#	2020	Elvis Yao <ElvisCW.Yao@moxa.com>
+#
+# Description:
+#	Moxa power igition daemon
+#
+
+VERSION=1.0.0
+CONFIG_FILE=/etc/moxa-configs/moxa-power-igtd.conf
+
+_is_number() {
+	local input=${1}
+	local num_regex='^[0-9]+$'
+
+	if [ -z "${input}" ]; then
+		return 1
+	fi
+
+	if ! [[ ${input} =~ ${num_regex} ]]; then
+		return 1
+	fi
+	return 0
+}
+
+gpio_request() {
+	local gpio=${1}
+
+	if [ ! -e "/sys/class/gpio/gpio${gpio}" ]
+	then
+		echo "${gpio}" > /sys/class/gpio/export
+	fi
+}
+
+gp() {
+	for gpiochip in /sys/class/gpio/gpiochip*
+	do
+		if cat "${gpiochip}"/label | grep -q "gpio_it87"
+		then
+			base=$(cat "${gpiochip}"/base)
+			break
+		fi
+	done
+
+	tens=$(($1 / 10))
+	units=$(($1 % 10))
+	echo $((base + 8 * (tens - 1) + units))
+}
+
+load_config() {
+	if [ ! -f "${CONFIG_FILE}" ]; then
+		echo "Error: config file \`${CONFIG_FILE}\` not found." >&2
+		return 1
+	fi
+	source "${CONFIG_FILE}"
+
+	if [ -z "${PWR_IGT_PIN}" ] || ! _is_number "${PWR_IGT_PIN}"; then
+		echo "Error: Can not load number of ignition pin." >&2
+		return 1
+	fi
+
+	if [ -z "${PWR_IGT_SIG_OFF_VAL}" ] || ! _is_number "${PWR_IGT_SIG_OFF_VAL}"; then
+		echo "Error: Can not load number of ignition signal off value." >&2
+		return 1
+	fi
+
+	if [ -z "${PWR_IGT_DELAY_SEC}" ] || ! _is_number "${PWR_IGT_DELAY_SEC}"; then
+		echo "Error: Can not load number of ignition daemon delay time." >&2
+		return 1
+	fi
+}
+
+main() {
+	# load moxa config
+	load_config
+
+	# Export power ignition gpio
+	PWR_IGT_GPIO=$(gp ${PWR_IGT_PIN})
+	PWR_IGT_GPIO_PATH="/sys/class/gpio/gpio${PWR_IGT_GPIO}/value"
+
+	gpio_request ${PWR_IGT_GPIO}
+
+	while true
+	do
+		igt_status_val="$(cat ${PWR_IGT_GPIO_PATH})"
+
+		if [ "$igt_status_val" == "$PWR_IGT_SIG_OFF_VAL" ]; then
+			wall -n "Power igition input signal is off. The system is going down now."
+			shutdown -h now
+			exit 0
+		fi
+		sleep $PWR_IGT_DELAY_SEC
+	done
+}
+
+main

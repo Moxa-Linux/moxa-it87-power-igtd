@@ -1,0 +1,9 @@
+[Unit]
+Description=Moxa power ignition daemon service
+
+[Service]
+Restart=on-failure
+ExecStart=/usr/sbin/mx_igtd
+
+[Install]
+WantedBy=multi-user.target

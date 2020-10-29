@@ -1,0 +1,6 @@
+moxa-it87-power-igtd (1.0.0+deb9) stretch; urgency=low
+
+  [Added]
+  * Add power ignition daemon mx_igtd and service file for it878x chip
+
+ -- Elvis Yao (姚家瑋) <ElvisCW.Yao@moxa.com>  Thu, 29 Oct 2020 10:59:29 +0800

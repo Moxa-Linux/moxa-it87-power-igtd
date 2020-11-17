@@ -1,0 +1,2 @@
+mx_igtd /usr/sbin
+moxa-it87-power-igtd.service /lib/systemd/system/multi-user.target.wants
